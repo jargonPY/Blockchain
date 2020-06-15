@@ -24,13 +24,13 @@ class UTXO():
     def get_by_txid(self, txid):
         """ query database by transaction id """
         
-        self.c.execute("SELETCT * FROM utxo WHERE txid=:txid", {'txid':txid})
+        self.c.execute("SELECT * FROM utxo WHERE txid=:txid", {'txid':txid})
         return self.c.fetchall()
     
     def get_by_pk(self, pk):
         """ query database by public key address """
         
-        self.c.execute("SELETCT * FROM utxo WHERE address=:address", {'address':address})
+        self.c.execute("SELECT * FROM utxo WHERE address=:address", {'address':address})
         return self.c.fetchall()
     
     def add_trans(self, trans):
@@ -41,7 +41,8 @@ class UTXO():
         
         with self.conn:
             self.c.execute("INSERT INTO utxo VALUES (:txid, :address, :amount, :block)",
-                                                {'txid':trans['tx_id'],
+                                                {'id':'NULL' # inserting NULL to pk will auto-increment
+                                                 'txid':trans['tx_id'],
                                                  'address':pass,
                                                  'amount':pass,
                                                  'block':pass})

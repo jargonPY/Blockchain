@@ -15,14 +15,23 @@ class Wallet():
         else:
             # load keys specified by user --> allows for usage of multiple keys
             pass
+        
+        self.balance()
     
     def balance(self):
         
         trans = UTXO.get_by_pk(self.pk)
-    
-    def pay_to(self):
+        self.balance = 0
+        for t in trans:
+            self.balance += t.amount
         
-        pass
+    def pay(self, amount, recepient):
+        """ checks for sufficient funds, creates transaction """
+        
+        if amount > self.balance:
+            print("Insufficient Funds")
+        else:
+            self.new_trans(amount, recepient)
     
     def check_received(self):
         
@@ -56,23 +65,46 @@ class Wallet():
             a json data structure with input/output information of the transaction
         """
         
+        trans, change = self._get_unspent(amount)
+        
+        vout = [{
+                    "amount":amount,
+                    "address":recepient
+                }]
+        
+        if change > 0:
+            vout.append({
+                    "amount":change,
+                    "address":self.pk
+                    })
+        
         data = {
-                "vin": [ ]
-            }
+                "vin": [ ],
+                "vout": vout
+            }        
         
     def _get_unspent(self, amount):
         """ 
-        returns: list
-            a list of transaction ids
+        returns: list, float
+            a list of transaction ids, 
+            float with the change amount
         
         Helper function that gets enough unspent transaction to cover the current
         transaction amount
         """
         trans = UTXO.get_by_pk(self.pk)
         cash = 0
+        count = 0
+        
         while cash < amount:
+            cash += trans[count][3] #(id, txid, address, amount, block)
+            count += 1
             
-            pass        
+        change = cash - amount
+        return trans[:count()], change
+    
+        
+        
         
         
         

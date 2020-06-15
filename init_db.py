@@ -12,8 +12,8 @@ def init_utxo():
                 id INTEGER PRIMARY KEY,
                 txid TEXT,
                 address TEXT,
-                amount, REAL,
-                block, INTEGER
+                amount REAL,
+                block INTEGER
                 )""")
     
     conn.commit()
