@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 from rsa import RSA
+from utxo import UTXO
+from wallet import Wallet
 
 class NewTransaction():
     

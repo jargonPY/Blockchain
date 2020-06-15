@@ -38,6 +38,16 @@ class NewBlock():
         return nonce, timestamp
     
     def create_block(self, root, nonce, time):
+        """
+        root : string
+            a hash value of the root of the merkle tree
+        nonce : int
+            a value used for mining (source of 'randomness' for the cryptographic hash puzzle)
+        time : datetime
+            timestamp for when the puzzle was completed and the block was created
+        
+        Saves a json file containing the block --> header and transactions
+        """
         
         data = {
                 "prev_block_hash": self.prev_block_hash,
@@ -56,17 +66,29 @@ class NewBlock():
         hashed = hashlib.sha256(data.encode())
         return hashed
         
-        
 
-    
-class UTXO():
-    
-    pass
-
-    
 class TransactionPool():
+    """
+    Should it hold all transactions in memory?
+        - if a block is built every 10 min then most transactions will be removed
+        - how many bytes is one transaction?
+        
+    Create a queue if multiple transactions arrive almost instantenously
+    """
     
-    pass
+    def __init__(self):
+        
+        pass
+    
+    def verify(self):
+        
+        pass
+    
+    def propogate(self):
+        
+        pass
+    
+    
 
 
 
