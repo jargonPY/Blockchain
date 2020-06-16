@@ -41,8 +41,8 @@ class UTXO():
         
         with self.conn:
             self.c.execute("INSERT INTO utxo VALUES (:txid, :address, :amount, :block)",
-                                                {'id':'NULL' # inserting NULL to pk will auto-increment
-                                                 'txid':trans['tx_id'],
+                                                {'id':'NULL', # inserting NULL to pk will auto-increment
+                                                 'txid':trans['txid'],
                                                  'address':pass,
                                                  'change':pass,
                                                  'amount':pass,
@@ -59,4 +59,10 @@ class UTXO():
             other nodes in the network """
             
         pass
+    
+    def close(self):
+        
+        self.conn.close()
+        
+        
     

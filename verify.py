@@ -86,6 +86,10 @@ class Verify():
         else:
             return False
         
+    def double_spend(self, trans):
+        
+        pass
+        
     @staticmethod
     def sha(data):
         
