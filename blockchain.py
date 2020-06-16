@@ -62,11 +62,13 @@ class NewBlock():
                 "transactions":self.trans
             }
         
-        path = os.getcwd() + "/blocks" + "/block.json"
+        block_num = NewBlock.get_block_num()
+        path = os.getcwd() + "/blocks" + f"/block_{block_num}.json"
         with open(path, "w") as file:
             json.dump(data, file)
     
-    def get_block_num(self):
+    @staticmethod
+    def get_block_num():
         
         pass
             
@@ -90,23 +92,9 @@ class TransactionPool():
         
         self.pool = { }
         
-        
     def insert(self, trans):
         
         self.pool[trans['txid']] = trans
-    
-    def verify(self, trans):
-        """ 
-        Valid transactions:
-            - valid hash (txid)
-            - input amount > output amount
-            - valid signatures
-        """
-        
-        trans = trans.copy()
-        hash_ = trans['txid']
-        del trans['txid']
-        hashed = TransactionPool.sha(trans)
     
     def propogate(self):
         
@@ -119,27 +107,9 @@ class TransactionPool():
     def check_new_block(self):
         
         pass
-    
-    @staticmethod
-    def sha(data):
-        
-        hashed = hashlib.sha256(data.encode())
-        return hashed
 
 
 
-x = {'txid':'asdf3442',
-     'vin':[
-            {'txid':'43531fg',
-             'amount':355,
-             'signature':'adsf3454'},
-            {'txid':'as34',
-             'amount':324,
-             'signature':'sdf34'
-                    }
-            ],
-     'vout':[ ]
-    }
     
     
     

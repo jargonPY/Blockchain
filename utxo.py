@@ -44,6 +44,7 @@ class UTXO():
                                                 {'id':'NULL' # inserting NULL to pk will auto-increment
                                                  'txid':trans['tx_id'],
                                                  'address':pass,
+                                                 'change':pass,
                                                  'amount':pass,
                                                  'block':pass})
     
@@ -59,4 +60,3 @@ class UTXO():
             
         pass
     
-

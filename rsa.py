@@ -36,31 +36,45 @@ class RSA():
             e = random.randrange(2,(phi-1))
         return e
     
+    # def generate_private_key(self):
+        
+    #     phi = (self.p - 1) * (self.q - 1)
+    #     for i in range(phi):
+    #         x = (i * phi) + 1
+    #         if x % self.e == 0:
+    #             d = int(x/self.e)
+    #             return d
+    #     print("DIDNT WORK")
+    
     def generate_private_key(self):
         
         phi = (self.p - 1) * (self.q - 1)
-        for i in range(phi):
-            x = (i * phi) + 1
-            if x % self.e == 0:
-                d = int(x/self.e)
-                return d
-        print("DIDNT WORK")
+        d = random.randrange(2,(phi-1))
+        check = (d * self.e) % phi
+        while check != 1:
+            d = random.randrange(2,(phi-1))
+            check = (d * self.e) % phi
+        print((d * self.e) % phi)
+        return int(d)
                 
     def sign(self, data, hashed=False):
         
         if not hashed:
-            hashed = hashlib.sha256(data.encode()).hexdigest()
-            hashed = int(hashed, 16)
+            #hashed = hashlib.sha256(data.encode()).hexdigest()
+            #hashed = int(hashed, 16)
+            hashed = ord(data)
         signed = pow(hashed, self.d, self.n)
         return signed
     
-    def verify(self, data, signature):
+    def verify(self, data, signature, hashed=False):
         
-        hashed = hashlib.sha256(data.encode()).hexdigest()
-        hashed = int(hashed, 16)
+        if not hashed:
+           # hashed = hashlib.sha256(data.encode()).hexdigest()
+           # hashed = int(hashed, 16)
+            hashed = ord(data)
         check = pow(signature, self.e, self.n)
-        print(hashed)
-        print(check)
+        print("ORIGINAL HASH: ", hashed)
+        print("CHECKED: ", check)
         if check == hashed:
             return True
         else:
@@ -68,6 +82,20 @@ class RSA():
     
         
 x = RSA(get_new=True)
-data = "Hello"
+data = "H"
 sig = x.sign(data)
 print(x.verify(data, sig))
+
+h = 14413
+s = pow(h, x.d, x.n)
+hprime = pow(s, x.e, x.n)
+
+
+
+
+
+
+
+
+
+

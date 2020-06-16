@@ -12,6 +12,7 @@ def init_utxo():
                 id INTEGER PRIMARY KEY,
                 txid TEXT,
                 address TEXT,
+                change INTEGER,
                 amount REAL,
                 block INTEGER
                 )""")

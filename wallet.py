@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import hashlib
 from rsa import RSA
 from utxo import UTXO
 
@@ -9,8 +10,8 @@ class Wallet():
     def __init__(self, load="Auto"):
         
         if load == "Auto":
-            # self.sk = load file
-            # self.pk = load file
+            # self.sk = load file --> tuple (n, d)
+            # self.pk = load file --> tuple (n, e)
             pass
         else:
             # load keys specified by user --> allows for usage of multiple keys
@@ -23,7 +24,7 @@ class Wallet():
         trans = UTXO.get_by_pk(self.pk)
         self.balance = 0
         for t in trans:
-            self.balance += t.amount
+            self.balance += t[4]
         
     def pay(self, amount, recepient):
         """ checks for sufficient funds, creates transaction """
@@ -41,7 +42,7 @@ class Wallet():
         
         pass
     
-    def sign(self, tx_id):
+    def sign(self, txid):
         """
         tx_id : string
             transaction hash which is a unique identifier for the tranaction
@@ -51,21 +52,30 @@ class Wallet():
             by this private key
         """
         
-        sig = RSA.sign(tx_id, hashed=True)
+        sig = RSA.sign(txid, hashed=True)
         return sig
     
     def new_trans(self, amount, recepient):
         """
         amount : float
             the total payment to the recepient
-        recepient : string
-            the public key address of the receiving party
+        recepient : tuple
+            the public key address of the receiving party (n, e)
             
         returns: json
             a json data structure with input/output information of the transaction
         """
         
         trans, change = self._get_unspent(amount)
+
+        vin = [ ]
+        for t in trans:
+            sig = self.sign(t[1]) # sign transaction id
+            vin.append({
+                        'txid':t[1], # (id, txid, address, change, amount, block)
+                        'change':t[3], # boolean 0 or 1
+                        'sig':sig,
+                        })
         
         vout = [{
                     "amount":amount,
@@ -79,9 +89,11 @@ class Wallet():
                     })
         
         data = {
-                "vin": [ ],
+                "vin": vin,
                 "vout": vout
-            }        
+            }
+        
+        data['txid'] = Wallet.sha(data) # hashes the transaction
         
     def _get_unspent(self, amount):
         """ 
@@ -98,11 +110,17 @@ class Wallet():
         count = 0
         
         while cash < amount:
-            cash += trans[count][3] #(id, txid, address, amount, block)
+            cash += trans[count][4] #(id, txid, address, change, amount, block)
             count += 1
             
         change = cash - amount
         return trans[:count()], change
+    
+    @staticmethod
+    def sha(data):
+        
+        hashed = hashlib.sha256(data.encode())
+        return hashed
     
         
         
