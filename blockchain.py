@@ -4,20 +4,24 @@ import hashlib
 import random
 import datetime
 import json
+import os
 from merkle import MerkleTree
     
 class NewBlock():
     
-    def __init__(self, prev_block_hash, transactions):
+    def __init__(self, prev_block_hash, transactions, diff='0'):
         """
         prev_block_hash : string
             Hash of the header of the previous block in the chain
         transactions : list
             A list of all transactions being mined in the current block
+        diff : string
+            difficulty of the hash puzzle, the number of zeroes 
         """
         
         self.prev_block_hash = prev_block_hash
         self.trans = transactions
+        self.diff = diff
         self.header_hash = self.header()
         
     def header(self):
@@ -30,7 +34,7 @@ class NewBlock():
     def proof_of_work(self, data):
         
         hashed = None
-        while hashed[0] != 0:
+        while hashed[:len(self.diff)] != self.diff:
             nonce = random.getrandbits(32)
             timestamp = datetime.datetime.now().isoformat()
             data += nonce + timestamp
@@ -57,8 +61,14 @@ class NewBlock():
                 "difficulty_target": None,
                 "transactions":self.trans
             }
-        with open("block.json", "w") as file:
+        
+        path = os.getcwd() + "/blocks" + "/block.json"
+        with open(path, "w") as file:
             json.dump(data, file)
+    
+    def get_block_num(self):
+        
+        pass
             
     @staticmethod
     def sha(data):
@@ -78,21 +88,58 @@ class TransactionPool():
     
     def __init__(self):
         
-        pass
-    
-    def verify(self):
+        self.pool = { }
         
-        pass
+        
+    def insert(self, trans):
+        
+        self.pool[trans['txid']] = trans
+    
+    def verify(self, trans):
+        """ 
+        Valid transactions:
+            - valid hash (txid)
+            - input amount > output amount
+            - valid signatures
+        """
+        
+        trans = trans.copy()
+        hash_ = trans['txid']
+        del trans['txid']
+        hashed = TransactionPool.sha(trans)
     
     def propogate(self):
         
         pass
     
+    def remove(self, txid):
+        
+        del self.pool[txid]
+        
+    def check_new_block(self):
+        
+        pass
     
+    @staticmethod
+    def sha(data):
+        
+        hashed = hashlib.sha256(data.encode())
+        return hashed
 
 
 
-    
+x = {'txid':'asdf3442',
+     'vin':[
+            {'txid':'43531fg',
+             'amount':355,
+             'signature':'adsf3454'},
+            {'txid':'as34',
+             'amount':324,
+             'signature':'sdf34'
+                    }
+            ],
+     'vout':[ ]
+    }
     
     
     

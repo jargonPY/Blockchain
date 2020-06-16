@@ -92,6 +92,7 @@ class Wallet():
         Helper function that gets enough unspent transaction to cover the current
         transaction amount
         """
+        
         trans = UTXO.get_by_pk(self.pk)
         cash = 0
         count = 0
