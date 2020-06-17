@@ -35,6 +35,9 @@ class Wallet():
             self.new_trans(amount, recepient)
     
     def check_received(self):
+        """ confirms transaction is sent and valid by looking in the 
+            transaction pool
+        """
         
         pass
     

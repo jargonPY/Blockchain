@@ -25,7 +25,7 @@ class UTXO():
         """ query database by transaction id """
         
         self.c.execute("SELECT * FROM utxo WHERE txid=:txid", {'txid':txid})
-        return self.c.fetchall()
+        return self.c.fetchone() # fetchone since txid should be unique
     
     def get_by_pk(self, pk):
         """ query database by public key address """

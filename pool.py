@@ -24,7 +24,15 @@ class TransactionPool():
     
     def remove(self, txid):
         
-        del self.pool[txid]
+        if txid in self.pool.keys():
+            del self.pool[txid]
+            
+    def check_in_pool(self, txid):
+        
+        if txid in self.pool.keys():
+            return True
+        else:
+            return False
         
     def check_new_block(self, block):
         

@@ -54,12 +54,14 @@ class NewBlock():
         """
         
         data = {
-                "prev_block_hash": self.prev_block_hash,
-                "merkle_root": root,
-                "timestamp": time,
-                "nonce": nonce,
-                "difficulty_target": None,
-                "transactions":self.trans
+                "header": {
+                    "prev_block_hash": self.prev_block_hash,
+                    "merkle_root": root,
+                    "timestamp": time,
+                    "nonce": nonce,
+                    "difficulty_target": self.diff
+                },
+                "transactions": self.trans
             }
         
         block_num = NewBlock.get_block_num()
@@ -70,7 +72,9 @@ class NewBlock():
     @staticmethod
     def get_block_num():
         
-        pass
+        with open(os.getcwd() + "/blocks" + "/counter.txt") as f:
+            block_num = int(f.read())
+        return block_num
             
     @staticmethod
     def sha(data):
