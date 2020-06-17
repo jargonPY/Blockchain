@@ -189,7 +189,6 @@ class Verify():
             start.append(utxo.get_by_txid(t['txid'])[-1])
             
         for block_num in range(min(start), end_block+1):
-            
             with open(path + f"/block_{block_num}") as f:
                 trans = json.load(f)['transactions']
                 
