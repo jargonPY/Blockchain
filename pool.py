@@ -28,6 +28,7 @@ class TransactionPool():
             del self.pool[txid]
             
     def check_in_pool(self, txid):
+        """ check if a transaction is in the transaction pool """
         
         if txid in self.pool.keys():
             return True
@@ -35,7 +36,13 @@ class TransactionPool():
             return False
         
     def check_new_block(self, block):
+        """
+        once new block is confirmed this method removes the corresponding 
+        transactions from the pool
+        """
         
         trans = block['transactions']
         for t in trans:
             self.remove(t['txid'])
+
+

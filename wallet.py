@@ -2,29 +2,57 @@
 # -*- coding: utf-8 -*-
 
 import hashlib
+import os
 from rsa import RSA
 from utxo import UTXO
+from Crypto.PublicKey import RSA
 
 class Wallet():
     
-    def __init__(self, load="Auto"):
+    def __init__(self, pool, utxo):
         
-        if load == "Auto":
-            # self.sk = load file --> tuple (n, d)
-            # self.pk = load file --> tuple (n, e)
-            pass
+        self.pool = pool
+        self.utxo = utxo
+        self.key = self.load_key()
+        self.balance = self.balance()
+        
+    def load_key(self):
+        
+        if "key.pem" in os.lsdir():
+            with open(os.getcwd() + "/key.pem") as f:
+                key = RSA.importKey(f.read())
         else:
-            # load keys specified by user --> allows for usage of multiple keys
-            pass
+            key = self.generate_key()
+        return key
         
-        self.balance()
+    def generate_key(self):
+        
+        key = RSA.generate(1024)
+        with open(os.getcwd() + "/key.pem", "w") as f:
+            f.write(RSA.exportKey("PEM"))
+        return key
+        
+    def sign(self, txid):
+        """
+        txid : hex string
+            the hex of the hash object of the transaction id
+        
+        returns : signature
+            the signature varifies that the input coins are valid and owned
+            by this private key
+        """
+        
+        byte_id = bytes.fromhex(txid.hexdigest())
+        sig = self.key.sign(byte_id, 32)
+        return sig
     
     def balance(self):
         
         trans = UTXO.get_by_pk(self.pk)
-        self.balance = 0
+        balance = 0
         for t in trans:
-            self.balance += t[4]
+            balance += t[4]
+        return balance
         
     def pay(self, amount, recepient):
         """ checks for sufficient funds, creates transaction """
@@ -35,8 +63,9 @@ class Wallet():
             self.new_trans(amount, recepient)
     
     def check_received(self):
-        """ confirms transaction is sent and valid by looking in the 
-            transaction pool
+        """ 
+        confirms transaction is sent and valid by looking in the 
+        transaction pool
         """
         
         pass
@@ -44,19 +73,6 @@ class Wallet():
     def get_trans(self):
         
         pass
-    
-    def sign(self, txid):
-        """
-        tx_id : string
-            transaction hash which is a unique identifier for the tranaction
-        
-        returns : signature
-            the signature varifies that the input coins are valid and owned
-            by this private key
-        """
-        
-        sig = RSA.sign(txid, hashed=True)
-        return sig
     
     def new_trans(self, amount, recepient):
         """
@@ -88,7 +104,7 @@ class Wallet():
         if change > 0:
             vout.append({
                     "amount":change,
-                    "address":self.pk
+                    "address":self.key.publickey().exportKey()
                     })
         
         data = {
@@ -108,7 +124,7 @@ class Wallet():
         transaction amount
         """
         
-        trans = UTXO.get_by_pk(self.pk)
+        trans = self.utxo.get_by_pk(self.pk)
         cash = 0
         count = 0
         
@@ -123,15 +139,16 @@ class Wallet():
     def sha(data):
         
         hashed = hashlib.sha256(data.encode())
-        return hashed
+        return hashed.hexdigest()
     
         
         
         
-        
-        
-        
-        
-        
+# hashed = hashlib.sha256("Hello!".encode()).digest()
+# sig = key.sign(hashed, 32)        
+# pk = key.publickey().exportKey()
+# pubKeyObj =  RSA.importKey(pk)
+# pubKeyObj.verify(hashed, sig)
+
         
 

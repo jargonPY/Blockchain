@@ -4,7 +4,7 @@
 from math import gcd
 import hashlib
 import random
-from prime_generator import generate_prime
+from Crypto.Util import number
 
 class RSA():
     """
@@ -21,8 +21,8 @@ class RSA():
             
     def get_primes(self):
         
-        p = generate_prime(bits=10)
-        q = generate_prime(bits=10)
+        p = number.getPrime(1024)
+        q = number.getPrime(1024)
         if p == q:
             self.get_primes()
         n = p * q

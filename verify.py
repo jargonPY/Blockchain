@@ -4,9 +4,23 @@
 import hashlib
 import json
 import os
+from Crypto.PublicKey import RSA
 from merkle import MerkleTree
 
 class Verify():
+    
+    def __init__(self, pool, utxo):
+        
+        self.pool = pool
+        self.utxo = utxo
+        self.path = os.getcwd() + "/blocks"
+        
+    def get_block_num(self):
+        """ make seperate method because block number is always changing """
+        
+        with open(self.path + "/counter.txt") as f:
+            block_num = int(f.read())
+        return block_num
     
     def verify_block(self, block):
         """
@@ -55,11 +69,8 @@ class Verify():
     
     def verify_prev_block(self, header):
         
-        path = os.getcwd() + "/blocks"
-        with open(path + "/counter.txt") as f:
-            block_num = int(f.read())
-            
-        with open(path + f"/block_{block_num}") as f:
+        block_num = self.get_block_num()
+        with open(self.path + f"/block_{block_num}") as f:
             block = json.load(f)
             
         hashed = Verify.sha(block['header'])
@@ -89,7 +100,7 @@ class Verify():
             return False
             
         
-    def get_prev_trans(self, txid, utxo): ######### HOW TO ACCESS UTXO
+    def get_prev_trans(self, txid):
         ######### ASSUMPTION THAT ALL UNSPENT TRANSACTIONS ARE IN THE UTXO DATABASE
         """ 
         txid : string
@@ -99,8 +110,8 @@ class Verify():
             is stored
         """
         
-        block_num = utxo.get_by_txid(txid)[-1] 
-        with open(os.getcwd() + "/blocks" + f"/block_{block_num}") as f:
+        block_num = self.utxo.get_by_txid(txid)[-1] 
+        with open(self.path + f"/block_{block_num}") as f:
             trans = json.load(f)['transactions']
         
         for t in trans:
@@ -138,9 +149,8 @@ class Verify():
             change = t['change']
             trans = prev_trans['vout'][change]
             sig = t['sig']
-            n, e = trans['address']
-            check = pow(sig, e, n)
-            if check != t['txid']:
+            pk = RSA.importKey(trans['address'])
+            if not pk.verify(t['txid'], sig):
                 return False
         return True
         
@@ -169,7 +179,7 @@ class Verify():
         else:
             return False
         
-    def double_spend(self, trans, pool, utxo): ##### POOL SOMEHOW NEEDS TO BE INCORPORATED
+    def double_spend(self, trans, pool, utxo):
         ##### ASSUMES TRANSACTION IS IN UTXO
         """
         -   check all transaction after the "input" transaction, ensure
@@ -179,17 +189,15 @@ class Verify():
         complexity: O(mn), m --> # of inputs, n --> # transactions to check
         """        
         
-        path = os.getcwd() + "/blocks"
-        with open(path + "/counter.txt") as f:
-                end_block = int(f.read())
         # check block chain     
         txids, start = [ ], [ ]
         for t in trans['vin']: # vin is a list of dictionaries
             txids.append(t['txid'])
-            start.append(utxo.get_by_txid(t['txid'])[-1])
-            
+            start.append(self.utxo.get_by_txid(t['txid'])[-1])
+        
+        end_block = self.get_block_num()
         for block_num in range(min(start), end_block+1):
-            with open(path + f"/block_{block_num}") as f:
+            with open(self.path + f"/block_{block_num}") as f:
                 trans = json.load(f)['transactions']
                 
             for t in trans:
@@ -198,7 +206,7 @@ class Verify():
                     return False
         # check pool
         for txid in txids:
-            if pool.check_in_pool(txid):
+            if self.pool.check_in_pool(txid):
                 return False
         return True
         
@@ -213,6 +221,12 @@ class Verify():
 
 
 
+    
+    
+    
+    
+    
+    
 
 
 

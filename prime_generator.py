@@ -68,21 +68,19 @@ def generate_prime(bits=1024, k=1):
     k : integer
         number of testing rounds
     """
-    
+    trials = 0
     byte = int(bits / 8)
-    n = int.from_bytes(os.urandom(byte), byteorder=sys.byteorder)
-    if n % 2 == 0:
-        n += n + 1
-
+    n = int.from_bytes(os.urandom(byte), byteorder=sys.byteorder) | 1
+    
     prime = miller_test(n, k)
     while not prime:
         n += 2
-        if n % 5 == 0:
+        check_low = low_prime(n)
+        if not check_low:
             n += 2
-        # check_low = low_prime(n)
-        # if not check_low:
-        #     n += 2
         prime = miller_test(n, k)
+        trials += 1
+    print("Trials: ", trials)
     return n
         
 if __name__ == "__main__":
@@ -90,5 +88,15 @@ if __name__ == "__main__":
     n = generate_prime(bits=80)
     end = time.time()
     print("Ellapsed time: ", end - start)
+    
+    
+    
+    
+    
+    
+    
+    
+
+
         
     
