@@ -13,5 +13,5 @@ Given the distributed nature of the network and the random topology, different n
 
 On startup:
   1. Empty transaction pool
-  2. get latest block
+  2. Get latest block
       - request hash of chain, if doesn't match then request missing blocks
