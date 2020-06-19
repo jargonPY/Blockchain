@@ -78,7 +78,7 @@ class Server():
         
     def get_nodes(self, conn):
         
-        ips = json.load(os.getcwd() + "/addresses.json")
+        ips = json.load(os.getcwd() + "/addr.json")
         self.route_request(conn)
 
     

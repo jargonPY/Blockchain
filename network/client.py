@@ -39,7 +39,7 @@ class Client():
         """
        
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # IPv4, TCP ## SHOULD IT BE IN THE FOR LOOP ???
-        ips = json.load(os.getcwd() + "/addresses.json")
+        ips = json.load(os.getcwd() + "/addr.json")
         for num, server in enumerate(ips['working']): # a list of ip addresses to connect to
             addr = (server, Client.PORT)
             try:
