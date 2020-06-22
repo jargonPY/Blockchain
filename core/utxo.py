@@ -39,8 +39,8 @@ class UTXO():
         trans : list
             a list of transactions
             
-        once a block is confirmed all of its transactions are added to the utxo
-        database
+        once a block is confirmed all of its transaction outputs are added to the 
+        utxo database
         """
         
         with open(os.getcwd() + "/blocks" + "/counter.txt") as f:
@@ -66,11 +66,19 @@ class UTXO():
                                                      'block': block_num})
             self.conn.commit()
         
-    def remove_trans(self, txid):
-        """ removes transaction from utxo by it's id (transaction hash) """
-        
-        with self.conn:
-            self.c.execute("DELETE from utxo WHERE txid = :txid", {'txid': txid})
+    def remove_trans(self, trans):
+        """
+        trans : list
+            a list of transactions
+            
+        once a block is confirmed all of its transaction inputs are removed from
+        the utxo database
+        """
+            
+        for t in trans:
+            for inputs in t['vin']:
+                with self.conn:
+                    self.c.execute("DELETE from utxo WHERE txid = :txid", {'txid': inputs['txid']})
     
     def update(self):
         """ 

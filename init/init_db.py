@@ -20,6 +20,19 @@ def init_utxo():
     conn.commit()
     conn.close()
     
+def init_blocks():
+    
+    conn = sqlite3.connect("blocks.db")
+    c = conn.cursor()
+    
+    c.execute("""CREATE TABLE blocks (
+                id INTEGER PRIMARY KEY,
+                hash TEXT
+                )""")
+    
+    conn.commit()
+    conn.close()
+    
 """ TRANSACTION FORMAT """
 
 """ {txid : sdf234
@@ -48,3 +61,4 @@ def init_utxo():
 
 if __name__ == "__main__":
     init_utxo()
+    init_blocks()

@@ -18,10 +18,6 @@ class TransactionPool():
         
         self.pool[trans['txid']] = trans
     
-    def propogate(self):
-        
-        pass
-    
     def remove(self, txid):
         
         if txid in self.pool.keys():

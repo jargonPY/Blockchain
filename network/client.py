@@ -48,7 +48,7 @@ class Client():
             except: ## ENSURE THE FAILURE IS DUE TO A SERVER BEING DOWN
                 self.remove_node(server)
     
-    def connect_from_server(self, server): ## CHECK TO ENSURE CONNECTION IS NOT ALREADY MADE
+    def connect_to_server(self, server): ## CHECK TO ENSURE CONNECTION IS NOT ALREADY MADE
         
         addr = (server, Client.PORT)
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -76,10 +76,12 @@ class Client():
         pass
     
     def req_block(self):
-        
+        """
+        Send the hash of the latest block
+        """
         pass
     
-    def req_ip(self):
+    def req_node(self):
         
         pass
     

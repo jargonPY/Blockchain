@@ -186,7 +186,7 @@ class Verify():
             that no output has this transaction as input
         -   check current pool to ensure no other transaction has the same 
             input
-        complexity: O(mn), m --> # of inputs, n --> # transactions to check
+        complexity: O(m) + O(n), m --> # of inputs, n --> # of transactions to check
         """        
         
         # check block chain     
