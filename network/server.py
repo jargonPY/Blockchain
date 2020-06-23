@@ -56,7 +56,9 @@ class Server():
                 self.get_data(conn)
             elif req == "NEW_BLOCK":
                 self.get_data(conn, trans=False)
-            elif req == "GET_BLOCK":
+            elif req == "GET_CHAIN":
+                self.get_chain(conn)
+            elif req == "GET_BLOCKS":
                 self.get_block(conn)
             elif req == "GET_NODES":
                 self.get_nodes(conn)
@@ -76,8 +78,10 @@ class Server():
         while total_recv < size:
             data += conn.recv(1024)
             total_recv += len(data)
-        
-        data = data.decode()
+        # deseralize the data
+        data = data.decode() 
+        # convert from to JSON to Python dictionary
+        data = data.loads()
         if trans:
             self.new_trans(conn, data)
         else:
@@ -115,7 +119,12 @@ class Server():
         self.node.blockdb.add_block(block)
         # propogate block
         self.node.prop_data(block, data_type="block")
-        
+    
+    def get_chain(self, conn):
+
+        pass
+
+
     def get_block(self, conn):
         
         conn.send("LASTEST")
@@ -137,7 +146,7 @@ class Server():
     def get_nodes(self, conn):
         
         ips = json.load(os.getcwd() + "/addr.json")
-        conn.send(ips.encode())
+        conn.send(ips.encode()) ## WONT WORK NEEDS TO BE A JSON OBJECT
         
 
     

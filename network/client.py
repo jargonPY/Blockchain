@@ -6,6 +6,7 @@ import logging
 import socket
 import threading
 import os
+import sys
 
 class Client():
     
@@ -49,6 +50,10 @@ class Client():
                 self.remove_node(server)
     
     def connect_to_server(self, server): ## CHECK TO ENSURE CONNECTION IS NOT ALREADY MADE
+        """
+        When a new node on the network connects to local node, this 
+        method is establisehd a two-way connection
+        """
         
         addr = (server, Client.PORT)
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -66,23 +71,60 @@ class Client():
         """
         
         pass
+
+    def prop_trans(self, trans):
+        """
+        trans : dict
+            dictionary containing transaction data
+        """
+
+        trans = json.dump(trans)
+        for conn in self.connections:
+            conn.send("NEW_TRANS".encode())
+            # wait for server to request size
+            get_size = conn.recv(1024)
+            if get_size != "GET_SIZE":
+                pass
+            ## JSON Object --> y = json.dumps(trans)
+            conn.send(sys.getsizeof(trans))
+            conn.sendall(bytes(trans, encoding="utf-8")) ## RETURNS NONE IF SUCESSFUL, THROWS ERROR OTHERWISE, ADD ERROR HANDLING
     
     def prop_block(self, block):
         
+        block = json.dump(block)
+        for conn in self.connections:
+            conn.send("NEW_BLOCK".encode())
+            get_size = conn.recv(1024)
+            if get_size != "GET_SIZE":
+                pass
+            conn.send(sys.getsizeof(trans))
+            conn.sendall(bytes(block, encoding="utf-8"))
+
+    def req_chain(self):
+
         pass
     
-    def prop_trans(self, trans):
+    def req_block(self, conn):
+        """
+        conn : socket object
+            the connection with the longest chain
+
+        Send the hash of the latest block all nodes will send back the 
+        number of missing blocks, this node will extend using the longest chain
+        method
+        """
         
-        pass
-    
-    def req_block(self):
-        """
-        Send the hash of the latest block
-        """
-        pass
+        latest = self.node.blockdb.get_latest()[1] # (id, hash, filename)
+        conn.send("NEW_BLOCKS".encode())
+        recv = conn.recv(1024)
+        if recv != "LATEST":
+            pass
+        conn.send(latest.encode())
+
     
     def req_node(self):
         
-        pass
+        conn.send("GET_NODES")
+        nodes = conn.recv(1024) 
     
     
