@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import hashlib
 import os
-from rsa import RSA
-from utxo import UTXO
 from Crypto.PublicKey import RSA
+from sha import sha
+from core.pool import TransactionPool
+from core.utxo import UTXO
+from network.client import Client
 
 class Wallet():
     
-    def __init__(self, pool, utxo):
+    def __init__(self, pool, utxo, client):
         
-        self.pool = pool
-        self.utxo = utxo
+        self.pool = TransactionPool()
+        self.utxo = UTXO()
         self.key = self.load_key()
         self.balance = self.balance()
         
@@ -48,7 +49,7 @@ class Wallet():
     
     def balance(self):
         
-        trans = UTXO.get_by_pk(self.pk)
+        trans = self.utxo.get_by_pk(self.pk)
         balance = 0
         for t in trans:
             balance += t[4]
@@ -65,7 +66,7 @@ class Wallet():
     def check_received(self):
         """ 
         confirms transaction is sent and valid by looking in the 
-        transaction pool
+        transaction pool and utxo_database
         """
         
         pass
@@ -112,7 +113,8 @@ class Wallet():
                 "vout": vout
             }
         
-        data['txid'] = Wallet.sha(data) # hashes the transaction
+        data['txid'] = sha(data) # hashes the transaction
+        self.broadcast(data)
         
     def _get_unspent(self, amount):
         """ 
@@ -135,11 +137,14 @@ class Wallet():
         change = cash - amount
         return trans[:count()], change
     
-    @staticmethod
-    def sha(data):
+    def broadcast(self, trans):
         
-        hashed = hashlib.sha256(data.encode())
-        return hashed.hexdigest()
+        ############# WORK ON THIS METHOD !!!
+        self.pool.insert(trans)
+        client = Client()
+        client.prop_trans(trans)
+        client.close()
+        
     
         
         

@@ -9,18 +9,17 @@ from merkle import MerkleTree
 
 class Verify():
     
-    def __init__(self, pool, utxo):
+    def __init__(self, pool, utxo, blockdb):
         
         self.pool = pool
         self.utxo = utxo
+        self.blockdb = blockdb
         self.path = os.getcwd() + "/blocks"
         
     def get_block_num(self):
         """ make seperate method because block number is always changing """
         
-        with open(self.path + "/counter.txt") as f:
-            block_num = int(f.read())
-        return block_num
+        return self.blockdb.get_latest()[0] # (id, hash, filename)
     
     def verify_block(self, block):
         """

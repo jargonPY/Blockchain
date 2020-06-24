@@ -7,6 +7,7 @@ import socket
 import threading
 import os
 import sys
+from core.blockdb import Blockdb
 
 class Client():
     
@@ -26,9 +27,10 @@ class Client():
     FORMAT = 'utf-8'
     DISCONNECT_MESSAGE = "!DISCONNECT"
     
-    def __init__(self, node):
+    def __init__(self):
         
-        self.node = node
+        self.blockdb = Blockdb()
+        self.ips = json.load(os.getcwd() + "/addr.json")
         self.connections = [ ] # list of tuples (conn, conn_id)
         self.startup_connect()
     
@@ -40,37 +42,42 @@ class Client():
         """
        
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # IPv4, TCP ## SHOULD IT BE IN THE FOR LOOP ???
-        ips = json.load(os.getcwd() + "/addr.json")
-        for num, server in enumerate(ips['working']): # a list of ip addresses to connect to
-            addr = (server, Client.PORT)
+        for num, ip in enumerate(self.ips['working']): # a list of ip addresses to connect to
+            addr = (ip, self.PORT)
             try:
                 client.connect(addr)
                 self.connections.append((client, num+1))
             except: ## ENSURE THE FAILURE IS DUE TO A SERVER BEING DOWN
-                self.remove_node(server)
+                self.failed_conn(ip)
     
-    def connect_to_server(self, server): ## CHECK TO ENSURE CONNECTION IS NOT ALREADY MADE
+    def connect_to_ip(self, ip): ## CHECK TO ENSURE CONNECTION IS NOT ALREADY MADE
         """
         When a new node on the network connects to local node, this 
         method is establisehd a two-way connection
         """
         
-        addr = (server, Client.PORT)
+        addr = (ip, self.PORT)
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client.connect(addr)
-        num = len(self.connections) + 1
-        self.connections.append((client, num))
+        try:
+            client.connect(addr)
+            num = len(self.connections) + 1
+            self.connections.append((client, num))
+        except:
+            self.failed_conn(ip)
     
     def check_conn(self):
         
         pass
     
-    def remove_node(self, server):
+    def failed_conn(self, ip):
         """
         When a node can't be reached this method is called 
         """
         
-        pass
+        if self.ips[ip] < 3:
+            self.ips[ip] += 1
+        else:
+            del self.ips[ip]
 
     def prop_trans(self, trans):
         """
@@ -87,7 +94,7 @@ class Client():
                 pass
             ## JSON Object --> y = json.dumps(trans)
             conn.send(sys.getsizeof(trans))
-            conn.sendall(bytes(trans, encoding="utf-8")) ## RETURNS NONE IF SUCESSFUL, THROWS ERROR OTHERWISE, ADD ERROR HANDLING
+            conn.sendall(trans.encode()) ## RETURNS NONE IF SUCESSFUL, THROWS ERROR OTHERWISE, ADD ERROR HANDLING
     
     def prop_block(self, block):
         
@@ -97,12 +104,19 @@ class Client():
             get_size = conn.recv(1024)
             if get_size != "GET_SIZE":
                 pass
-            conn.send(sys.getsizeof(trans))
-            conn.sendall(bytes(block, encoding="utf-8"))
+            conn.send(sys.getsizeof(block))
+            conn.sendall(block.encode())
 
     def req_chain(self):
 
-        pass
+        longest = (None, 0)
+        for conn in self.connections:
+            conn.send("GET_CHAIN_LEN")
+            chain_len = conn.recv(1024)
+            if chain_len > longest[1]:
+                longest = (conn, chain_len)
+        # once longest chain is found request the blocks
+        self.req_block(longest[0])
     
     def req_block(self, conn):
         """
@@ -114,17 +128,38 @@ class Client():
         method
         """
         
-        latest = self.node.blockdb.get_latest()[1] # (id, hash, filename)
+        latest = self.blockdb.get_latest()[1] # (id, hash, filename)
         conn.send("NEW_BLOCKS".encode())
         recv = conn.recv(1024)
         if recv != "LATEST":
             pass
         conn.send(latest.encode())
+        num_blocks = conn.recv(1024)
+
+        block = 1
+        while block <= num_blocks:
+            block_size = conn.recv(1024).decode()
+            data = conn.recv(1024)
+            while len(data) < block_size:
+                data += conn.recv(1024)
+            self.blockdb.add_block(data.decode()) ## DOESNT VARIFY THE BLOCK
+            block += 2
 
     
     def req_node(self):
         
-        conn.send("GET_NODES")
-        nodes = conn.recv(1024) 
+        for conn in self.connections:
+            conn.send("GET_NODES")
+            nodes = conn.recv(1024).decode()
+            for key in nodes.keys():
+                if key not in self.ips.keys:
+                    self.ips[key] = 0
+                    
+    def close(self):
+        
+        for conn in self.connections:
+            conn.send(self.DISCONNECT_MESSAGE)
+            conn.close()
+
     
     

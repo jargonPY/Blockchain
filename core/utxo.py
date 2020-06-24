@@ -34,17 +34,17 @@ class UTXO():
         self.c.execute("SELECT * FROM utxo WHERE address=:address", {'address':pk})
         return self.c.fetchall()
     
-    def add_trans(self, trans):
+    def add_trans(self, trans, block_hash):
         """
         trans : list
             a list of transactions
             
+        block_hash : string
+            a hex representation of the hash of the block containing the transactions
+            
         once a block is confirmed all of its transaction outputs are added to the 
         utxo database
         """
-        
-        with open(os.getcwd() + "/blocks" + "/counter.txt") as f:
-            block_num = int(f.read())
         
         for t in trans:
             if len(t['vout']) == 2: # t['vout'] is a list of outputs
@@ -54,7 +54,7 @@ class UTXO():
                                                      'address': t['vout'][1]['address'],
                                                      'change': 1,
                                                      'amount': t['vout'][1]['amount'],
-                                                     'block': block_num})
+                                                     'block': block_hash})
                 self.conn.commit()
                 
             self.c.execute("INSERT INTO utxo VALUES (:txid, :address, :amount, :block)",
@@ -63,7 +63,7 @@ class UTXO():
                                                      'address': t['vout'][0]['address'],
                                                      'change': 0,
                                                      'amount': t['vout'][0]['amount'],
-                                                     'block': block_num})
+                                                     'block': block_hash})
             self.conn.commit()
         
     def remove_trans(self, trans):

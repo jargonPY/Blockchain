@@ -3,8 +3,8 @@
 
 from core.blockdb import Blockdb
 from core.pool import TransactionPool
-from core.verify import Verify
 from core.utxo import UTXO
+from core.wallet import Wallet
 from network.server import Server
 from network.server import Client
 
@@ -18,19 +18,22 @@ class Main():
     def __init__(self):
         
         self.pool = TransactionPool()
-        self.utxo = UTXO()
-        self.server = Server(self) # passes self.Main instance
-        self.client = Client(self)
         self.blockdb = Blockdb()
+        self.utxo = UTXO()
+        self.client = Client(self.blockdb)
+        self.server = Server(self.pool, self.utxo, self.client, self.blockdb)
+        self.wallet = Wallet(self.pool, self.utxo, self.client)
+        
+        
         
     def add_client(self, addr):
         """
         Called by the Server class to establish a two-way connection 
         """
         
-        self.client.connect_to_server(addr)
+        self.client.connect_to_ip(addr)
         
-    def prop_data(self, data, data_type=""):
+    def broadcast(self, data, data_type=""):
         
         if data_type == "trans":
             self.client.prop_trans(data)

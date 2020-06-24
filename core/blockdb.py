@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 import sqlite3
+from sha import sha
 
 """
 All blocks are added to Blockdb even local one, this will also automatically save the block
@@ -22,13 +23,13 @@ class Blockdb():
 
     def add_block(self, block):
         
-        block_num = self.get_latest()
+        block_num = self.get_latest()[0] + 1 
         file = f"/block_{block_num}.json"
         # save the block as a file
         with open(os.getcwd() + "/blocks" +  file, "w") as f:
             json.dump(block, f)
         
-        block = Blockdb.sha(block)
+        block = sha(block)
         # add block to hash-table database
         with self.conn:
             self.c.execute("INSERT INTO blocks VALUES (:file, :hash)", {'file':file, 'hash':block})
@@ -58,11 +59,3 @@ class Blockdb():
         
         self.c.execute(f"SELECT * FROM blocks WHERE ID > {primary_key}")
         return self.c
-    
-    @staticmethod
-    def sha(data):
-        
-        hashed = hashlib.sha256(data.encode()).hexdigest()
-        return hashed
-
-

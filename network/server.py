@@ -6,8 +6,12 @@ import logging
 import socket
 import threading
 import os
-from blockdb import Blockdb
 from core.verfiy import Verify
+from core.sha import sha
+from core.pool import TransactionPool
+from core.utxo import UTXO
+from core.blockdb import Blockdb
+from network.client import Client
 
 class Server():
     
@@ -29,10 +33,12 @@ class Server():
     FORMAT = 'utf-8'
     DISCONNECT_MESSAGE = "!DISCONNECT"
     
-    def __init__(self, node):
+    def __init__(self, pool, utxo, client, blockdb):
         
-        self.node = node
+        self.pool = TransactionPool()
+        self.utxo = UTXO()
         self.db = Blockdb()
+        self.client = Client()
         self.connections = [ ] # list of tuples (conn, conn_id)
         self.listen()
         
@@ -44,7 +50,7 @@ class Server():
         print("SERVER STARTED")
         while True:
             conn, addr = server.accept() ## ADD ADDRESS TO NODE IPS FILE
-            self.node.add_client(addr)
+            self.add_client(addr)
             thread = threading.Thread(target=self.route_request, args=(conn,))
             thread.start()
             
@@ -56,8 +62,8 @@ class Server():
                 self.get_data(conn)
             elif req == "NEW_BLOCK":
                 self.get_data(conn, trans=False)
-            elif req == "GET_CHAIN":
-                self.get_chain(conn)
+            elif req == "GET_CHAIN_LEN":
+                self.get_chain_len(conn)
             elif req == "GET_BLOCKS":
                 self.get_block(conn)
             elif req == "GET_NODES":
@@ -90,50 +96,52 @@ class Server():
     def new_trans(self, conn, trans):
         
         # check if in transaction pool
-        if self.node.pool.check_in_pool(self, trans['txid']):
+        if self.pool.check_in_pool(self, trans['txid']):
             return None
         
         if not Verify.verify_trans(trans):
             return None
         # add transaction to pool
-        self.node.pool.insert(trans)
+        self.pool.insert(trans)
         # propogate transaction
-        self.node.prop_data(trans, data_type="trans")
+        self.client.prop_trans(trans)
     
     def new_block(self, conn, block):
         
         # check if block is already in the local chain
-        exists = self.db.get_block_by_hash(Blockdb.sha(block))
+        exists = self.blockdb.get_block_by_hash(sha(block))
         if exists != None:
             return None
         # ensure the block is valid
         if not Verify.verify_block(block):
             return None
         # remove all transaction in the block from unconfirmed pool
-        self.node.pool.check_new_block(Blockdb.sha(block))
+        self.pool.check_new_block(sha(block))
         # add all transaction outputs to utxo
-        self.node.utxo.add_trans(block['transactions'])
+        self.utxo.add_trans(block['transactions'], sha(block))
         # remove all inputs from utxo
-        self.node.utxo.remove_trans(block['transactions'])
+        self.utxo.remove_trans(block['transactions'])
         # save block in Blockdb
-        self.node.blockdb.add_block(block)
+        self.blockdb.add_block(block)
         # propogate block
-        self.node.prop_data(block, data_type="block")
+        self.client.prop_blcok(block)
     
-    def get_chain(self, conn):
+    def get_chain_len(self, conn):
 
         pass
-
 
     def get_block(self, conn):
         
         conn.send("LASTEST")
         latest = conn.recv(1024).decode()
         primary_key = self.db.get_block_by_hash(latest)
+
+        blocks = self.db.get_from(primary_key)
+        conn.send(len(blocks)) ## CAN AN INT BE SENT OVER SOCKET ???
         
-        for filename in self.db.get_from(primary_key)[3]: # WHAT IF RETURNS NONE, is 3 the correct index
+        for filename in blocks[3]: # WHAT IF RETURNS NONE, is 3 the correct index
             size = str(os.path.getsize(filename))
-            conn.send(f"BLOCK SIZE {size}".encode())
+            conn.send(size.encode())
             
             with open(filename, 'rb') as f:
                 data = f.read(1024)
@@ -141,7 +149,6 @@ class Server():
                 while data != "":
                     data = f.read(1024)
                     conn.send(data)
-        conn.send("DONE")
     
     def get_nodes(self, conn):
         
