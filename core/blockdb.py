@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import hashlib
 import json
 import os
 import sqlite3
-from sha import sha
+from core.sha import sha
 
 """
 All blocks are added to Blockdb even local one, this will also automatically save the block
@@ -23,30 +22,36 @@ class Blockdb():
 
     def add_block(self, block):
         
-        block_num = self.get_latest()[0] + 1 
+        block_num = self.get_latest()
+        if block_num == None:
+            block_num = 1
+        else:
+            block_num += 1
+        
+        
         file = f"/block_{block_num}.json"
         # save the block as a file
         with open(os.getcwd() + "/blocks" +  file, "w") as f:
             json.dump(block, f)
         
-        block = sha(block)
+        block_hash = sha(json.dumps(block))
         # add block to hash-table database
         with self.conn:
-            self.c.execute("INSERT INTO blocks VALUES (:file, :hash)", {'file':file, 'hash':block})
+            self.c.execute("INSERT INTO blocks VALUES (NULL, :hash, :file)", {'hash':block_hash, 'file':f'block_{block_num}'})
 
     def get_block_by_hash(self, block_hash):
         
-        self.c.execute(f"SELETCT * FROM blocks WHERE hash={block_hash}")
-        self.c.fetchone()
+        self.c.execute(f"SELECT * FROM blocks WHERE hash = '{block_hash}'")
+        return self.c.fetchone()
     
     def get_latest(self):
         """
-        return : tuple
-            the lastest entry in the database
+        return : int
+            the id of the lastest entry in the database
         """
         
         self.c.execute("SELECT max(id) FROM blocks")
-        self.c.fetchone()
+        return self.c.fetchone()[0]
         
     def get_from(self, primary_key):
         """

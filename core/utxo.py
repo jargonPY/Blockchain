@@ -48,18 +48,16 @@ class UTXO():
         
         for t in trans:
             if len(t['vout']) == 2: # t['vout'] is a list of outputs
-                self.c.execute("INSERT INTO utxo VALUES (:txid, :address, :amount, :block)",
-                                                    {'id':'NULL', # inserting NULL to pk will auto-increment
-                                                     'txid': trans['txid'],
+                self.c.execute("INSERT INTO utxo VALUES (NULL, :txid, :address, :change, :amount, :block)",
+                                                    {'txid': trans['txid'],
                                                      'address': t['vout'][1]['address'],
                                                      'change': 1,
                                                      'amount': t['vout'][1]['amount'],
                                                      'block': block_hash})
                 self.conn.commit()
                 
-            self.c.execute("INSERT INTO utxo VALUES (:txid, :address, :amount, :block)",
-                                                    {'id':'NULL', # inserting NULL to pk will auto-increment
-                                                     'txid': trans['txid'],
+            self.c.execute("INSERT INTO utxo VALUES (NULL, :txid, :address, :amount, :block)",
+                                                    {'txid': trans['txid'],
                                                      'address': t['vout'][0]['address'],
                                                      'change': 0,
                                                      'amount': t['vout'][0]['amount'],
@@ -79,14 +77,6 @@ class UTXO():
             for inputs in t['vin']:
                 with self.conn:
                     self.c.execute("DELETE from utxo WHERE txid = :txid", {'txid': inputs['txid']})
-    
-    def update(self):
-        """ 
-        if the computer was disconnected from the network it should update by querying
-        other nodes in the network 
-        """
-            
-        pass
     
     def close(self):
         

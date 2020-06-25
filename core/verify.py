@@ -19,7 +19,7 @@ class Verify():
     def get_block_num(self):
         """ make seperate method because block number is always changing """
         
-        return self.blockdb.get_latest()[0] # (id, hash, filename)
+        return self.blockdb.get_latest()
     
     def verify_block(self, block):
         """
