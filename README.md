@@ -15,3 +15,20 @@ On startup:
   1. Empty transaction pool
   2. Get latest block
       - request hash of chain, if doesn't match then request missing blocks
+      
+Data Structures:
+  Block: 
+          {'header': dict with header details,
+           'transactions': list of transaction}
+  Transaction:
+          {'txid': hash of current transaction
+           'vin' : list of input transaction
+           'vout': output transactions (max. 2 output transactions)}
+  Blockdb:
+          An SQL database containing three fields (id (primary key), hash (of the block), filename). 
+          This database is used to query blocks by their hash and find corresponding files.
+          
+  UTXO (Unspent Transaction Output) database:
+           An SQL database containing all unspent transaction outputs.
+           Contains six fields (id (primary key), txid, address (public key of output), change (0 or 1), amount, block (the hash of the block that contains the transaction)).
+           This allows a node to quickly verify inputs of incoming transactions. Wallets also use the database to find outputs belonging to their public key (and thus can show the            'balance' of the account to the user), and to find output transactions to be used as inputs for new transactions.
