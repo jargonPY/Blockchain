@@ -5,7 +5,7 @@ import hashlib
 import json
 import os
 from Crypto.PublicKey import RSA
-from merkle import MerkleTree
+from core.merkle import MerkleTree
 
 class Verify():
     
@@ -100,7 +100,6 @@ class Verify():
             
         
     def get_prev_trans(self, txid):
-        ######### ASSUMPTION THAT ALL UNSPENT TRANSACTIONS ARE IN THE UTXO DATABASE
         """ 
         txid : string
             hash of the transaction to be retrieved

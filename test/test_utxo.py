@@ -41,22 +41,27 @@ class UTXOTestCase(unittest.TestCase):
         
     trans_b = {"txid":"b2", 
                "vin":[{"txid":"a4", "change":0, "sig":"df43"}],
-               "vout":[{"amount":750, "address":"a22"}, {"amount":423, "address":"a232"}],
+               "vout":[{"amount":750, "address":"a22"}],
                "block":1}
     
     check_a = (1, "b1", "a21", 0, 750, 1)
     check_b = (2, "b2", "a22", 1, 240.0, 2)
     
     def setUp(self):
+        """
+        Before every method is run a new database is setup and two entries are
+        added, this sets up the conditions where each method would be called on,
+        and allows for the independent testing of each method
+        """
         
         self.utxo = UTXOClone()
         for trans in [self.trans_a, self.trans_b]:
             with self.utxo.conn:
                 self.utxo.c.execute("INSERT INTO utxo VALUES (NULL, :txid, :address, :change, :amount, :block)",
                                                             {'txid': trans['txid'],
-                                                             'address': trans['address'],
-                                                             'change': trans['change'],
-                                                             'amount': trans['amount'],
+                                                             'address': trans['vout'][0]['address'],
+                                                             'change': 0,
+                                                             'amount': trans['vout'][0]['amount'],
                                                              'block': trans['block']})
             
     def test_get_by_txid(self):

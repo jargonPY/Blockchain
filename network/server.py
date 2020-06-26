@@ -6,12 +6,18 @@ import logging
 import socket
 import threading
 import os
-from core.verfiy import Verify
+import sys
+
+currentdir = os.path.dirname(__file__)
+parentdir = os.path.dirname(currentdir)
+sys.path.append(parentdir)
+
+from core.verify import Verify
 from core.sha import sha
 from core.pool import TransactionPool
 from core.utxo import UTXO
 from core.blockdb import Blockdb
-from network.client import Client
+from client import Client
 
 class Server():
     
@@ -25,21 +31,18 @@ class Server():
      - provide IP addresses for node connections
     """
     
-    HEADER = 64
     PORT = 5050
     #SERVER = socket.gethostbyname(socket.gethostname())
     SERVER = "127.0.0.1"
     ADDR =  (SERVER, PORT)
-    FORMAT = 'utf-8'
     DISCONNECT_MESSAGE = "!DISCONNECT"
     
-    def __init__(self, pool, utxo, client, blockdb):
+    def __init__(self):
         
         self.pool = TransactionPool()
         self.utxo = UTXO()
-        self.db = Blockdb()
+        self.blockdb = Blockdb()
         self.client = Client()
-        self.connections = [ ] # list of tuples (conn, conn_id)
         self.listen()
         
     def listen(self):
@@ -50,7 +53,8 @@ class Server():
         print("SERVER STARTED")
         while True:
             conn, addr = server.accept() ## ADD ADDRESS TO NODE IPS FILE
-            self.add_client(addr)
+            self.client.connect_to_ip(addr[0])
+            print("Server connected to: ", addr)
             thread = threading.Thread(target=self.route_request, args=(conn,))
             thread.start()
             
@@ -72,11 +76,11 @@ class Server():
                 msg = "FAILED_REQUEST".encode()
                 conn.send(msg)
             req = conn.recv(1024).decode()
+        conn.close()
             
     def get_data(self, conn, trans=True):
         
         # request the size of file to be received
-        conn.send("GET_SIZE".encode())
         size = conn.recv(1024).decode()
         # get the file
         data = conn.recv(1024)
@@ -128,35 +132,39 @@ class Server():
     
     def get_chain_len(self, conn):
 
-        pass
+        latest = self.utxo.get_latest()
+        conn.send(str(latest).encode())
 
     def get_block(self, conn):
         
-        conn.send("LASTEST")
-        latest = conn.recv(1024).decode()
-        primary_key = self.db.get_block_by_hash(latest)
-
-        blocks = self.db.get_from(primary_key)
-        conn.send(len(blocks)) ## CAN AN INT BE SENT OVER SOCKET ???
+        primary_key = int(conn.recv(1024).decode())
+        blocks = self.blockdb.get_from(primary_key)
+        conn.send(str(blocks).encode()) 
         
-        for filename in blocks[3]: # WHAT IF RETURNS NONE, is 3 the correct index
-            size = str(os.path.getsize(filename))
+        path = os.path.dirname(os.getcwd())
+        for filename in blocks[3]: # WHAT IF RETURNS NONE
+            file = path + "/core/" + filename + ".json"
+            size = str(os.path.getsize(file))
             conn.send(size.encode())
             
-            with open(filename, 'rb') as f:
-                data = f.read(1024)
-                conn.send(data)
-                while data != "":
-                    data = f.read(1024)
-                    conn.send(data)
+            with open(os.getcwd() + "/addr.json") as file:
+                data = json.load(file)
+        
+            data = json.dumps(data)
+            conn.sendall(data.encode())
+            
     
     def get_nodes(self, conn):
         
-        ips = json.load(os.getcwd() + "/addr.json")
-        conn.send(ips.encode()) ## WONT WORK NEEDS TO BE A JSON OBJECT
+        with open(os.getcwd() + "/addr.json") as file:
+            data = json.load(file)
         
-
-    
+        data = json.dumps(data)
+        conn.send(str(sys.getsizeof(data)).encode())
+        conn.sendall(data.encode()) ## WONT WORK NEEDS TO BE A JSON OBJECT
+        
+if __name__ == "__main__":
+    server = Server()
 
     
     

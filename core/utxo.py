@@ -32,7 +32,7 @@ class UTXO():
         """ query database by public key address """
         
         self.c.execute("SELECT * FROM utxo WHERE address=:address", {'address':pk})
-        return self.c.fetchall()
+        return self.c.fetchall() 
     
     def add_trans(self, trans, block_hash):
         """
