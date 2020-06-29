@@ -6,6 +6,11 @@ import logging
 import socket
 import os
 import sys
+
+currentdir = os.path.dirname(__file__)
+parentdir = os.path.dirname(currentdir)
+sys.path.append(parentdir)
+
 from core.blockdb import Blockdb
 
 class Client():
@@ -19,14 +24,13 @@ class Client():
     """
     
     PORT = 5050
-    SERVER = "127.0.0.1"
-    DISCONNECT_MESSAGE = "!DISCONNECT"
+    DISCONNECT_MESSAGE = "DISCONNECT"
     
     def __init__(self):
         
         self.blockdb = Blockdb()
         self.connections = { } # {ip : conn}
-        with open(os.getcwd() + "/addr.json") as file:
+        with open(parentdir + "/network" + "/addr.json") as file:
             self.ips = json.load(file)
         self.startup_connect()
     
@@ -69,10 +73,6 @@ class Client():
         if ip not in self.ips.keys():
             self.ips[ip] = 0
     
-    def check_conn(self):
-        
-        pass
-    
     def failed_conn(self, ip):
         """
         When a node can't be reached this method is called 
@@ -92,22 +92,26 @@ class Client():
         trans = json.dumps(trans)
         for conn in self.connections.values():
             conn.send("NEW_TRANS".encode())
-            conn.send(sys.getsizeof(trans))
-            conn.sendall(trans.encode()) ## RETURNS NONE IF SUCESSFUL, THROWS ERROR OTHERWISE, ADD ERROR HANDLING
+            trans_encoded = trans.encode()
+            trans_size = str(sys.getsizeof(trans_encoded))
+            conn.send(trans_size.encode())
+            conn.sendall(trans_encoded) ## RETURNS NONE IF SUCESSFUL, THROWS ERROR OTHERWISE, ADD ERROR HANDLING
     
     def prop_block(self, block):
         
         block = json.dumps(block)
         for conn in self.connections.values():
             conn.send("NEW_BLOCK".encode())
-            conn.send(sys.getsizeof(block))
-            conn.sendall(block.encode())
-
+            block_encoded = block.encode()
+            block_size = str(sys.getsizeof(block_encoded))
+            conn.send(block_size.encode())
+            conn.sendall(block_encoded)
+        print("Done")
     def req_chain(self):
 
         longest = (None, 0)
         for conn in self.connections.values():
-            conn.send("GET_CHAIN_LEN")
+            conn.send("GET_CHAIN_LEN".encode())
             chain_len = int(conn.recv(1024).decode())
             if chain_len > longest[1]:
                 longest = (conn, chain_len)
@@ -159,7 +163,7 @@ class Client():
     def close(self):
         
         for conn in self.connections.values():
-            conn.send(self.DISCONNECT_MESSAGE)
+            conn.send(self.DISCONNECT_MESSAGE.encode())
             conn.close()
 
     

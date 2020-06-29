@@ -5,7 +5,8 @@ import random
 import datetime
 import json
 import os
-from merkle import MerkleTree
+from core.merkle import MerkleTree
+from core.sha import sha
     
 class NewBlock():
     
@@ -22,74 +23,45 @@ class NewBlock():
         self.prev_block_hash = prev_block_hash
         self.trans = transactions
         self.diff = diff
-        self.header_hash = self.header()
+        self.block = self.header()
         
     def header(self):
         
-        merkle_root = MerkleTree(self.trans).root
-        data = merkle_root + self.prev_block_hash
-        nonce, timestamp = self.proof_of_work(data)
-        self.create_block(merkle_root, nonce, timestamp)
+        #merkle_root = MerkleTree(self.trans).root
+        merkle_root = "1"
+        header = self.proof_of_work(merkle_root)
+        block = self.create_block(header)
+        return block
     
-    def proof_of_work(self, data):
+    def proof_of_work(self, merkle_root):
         
-        hashed = None
+        hashed = "1" * len(self.diff)
         while hashed[:len(self.diff)] != self.diff:
-            nonce = random.getrandbits(32)
-            timestamp = datetime.datetime.now().isoformat()
-            data += nonce + timestamp
-            hashed = NewBlock.sha(data)
-        return nonce, timestamp
+            header = {
+                        "prev_block_hash": self.prev_block_hash,
+                        "merkle_root": merkle_root,
+                        "timestamp": str(datetime.datetime.now().isoformat()),
+                        "nonce": str(random.getrandbits(32)),
+                        "difficulty_target": self.diff
+                     }
+            hashed = sha(json.dumps(header))
+        return header
     
-    def create_block(self, root, nonce, time):
+    def create_block(self, header):
         """
-        root : string
-            a hash value of the root of the merkle tree
-        nonce : int
-            a value used for mining (source of 'randomness' for the cryptographic hash puzzle)
-        time : datetime
-            timestamp for when the puzzle was completed and the block was created
-        
-        Saves a json file containing the block --> header and transactions
+        header : dict
+            containing the proof-of-work and all header data
+            
+        return : dict
+            returns a dict object containing the block
         """
         
         data = {
-                "header": {
-                    "prev_block_hash": self.prev_block_hash,
-                    "merkle_root": root,
-                    "timestamp": time,
-                    "nonce": nonce,
-                    "difficulty_target": self.diff
-                },
+                "header": header,
                 "transactions": self.trans
             }
         
-        block_num = NewBlock.get_block_num()
-        path = os.getcwd() + "/blocks" + f"/block_{block_num}.json"
-        with open(path, "w") as file:
-            json.dump(data, file)
-    
-    @staticmethod
-    def get_block_num():
-        
-        with open(os.getcwd() + "/blocks" + "/counter.txt") as f:
-            block_num = int(f.read())
-        return block_num
-            
-    @staticmethod
-    def sha(data):
-        
-        hashed = hashlib.sha256(data.encode())
-        return hashed
-        
+        return data
 
 
 
-
-
-    
-    
-    
-    
-        
-        

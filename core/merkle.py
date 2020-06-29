@@ -32,6 +32,7 @@ class MerkleTree:
         """
         num_leaves = len(leaves)
         if num_leaves == 1:
+            print(leaves)
             return leaves[0]
 
         parents = []

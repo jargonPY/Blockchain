@@ -6,6 +6,9 @@ import os
 import sqlite3
 from core.sha import sha
 
+currentdir = os.path.dirname(__file__)
+parentdir = os.path.dirname(currentdir)
+
 """
 All blocks are added to Blockdb even local one, this will also automatically save the block
 in a corresponding file
@@ -17,7 +20,7 @@ class Blockdb():
     
     def __init__(self):
         
-        self.conn = sqlite3.connect("blocks.db")
+        self.conn = sqlite3.connect(parentdir + "/databases" + "/blocks.db")
         self.c = self.conn.cursor()
 
     def add_block(self, block):
@@ -31,13 +34,13 @@ class Blockdb():
         
         file = f"/block_{block_num}.json"
         # save the block as a file
-        with open(os.getcwd() + "/blocks" +  file, "w") as f:
+        with open(parentdir + "/blocks" +  file, "w") as f:
             json.dump(block, f)
         
-        block_hash = sha(json.dumps(block))
+        block_hash = sha(json.dumps(block['header']))
         # add block to hash-table database
         with self.conn:
-            self.c.execute("INSERT INTO blocks VALUES (NULL, :hash, :file)", {'hash':block_hash, 'file':f'block_{block_num}'})
+            self.c.execute("INSERT INTO blocks VALUES (NULL, :hash, :file)", {'hash':block_hash, 'file':f'block_{block_num}.json'})
 
     def get_block_by_hash(self, block_hash):
         

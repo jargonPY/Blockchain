@@ -32,10 +32,10 @@ class Server():
     """
     
     PORT = 5050
-    #SERVER = socket.gethostbyname(socket.gethostname())
+   # SERVER = socket.gethostbyname(socket.gethostname())
     SERVER = "127.0.0.1"
     ADDR =  (SERVER, PORT)
-    DISCONNECT_MESSAGE = "!DISCONNECT"
+    DISCONNECT_MESSAGE = "DISCONNECT"
     
     def __init__(self):
         
@@ -48,7 +48,7 @@ class Server():
     def listen(self):
         
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # IPv4, TCP
-        server.bind(Server.ADDR)
+        server.bind(self.ADDR)
         server.listen()
         print("SERVER STARTED")
         while True:
@@ -61,17 +61,23 @@ class Server():
     def route_request(self, conn):
         
         req = conn.recv(1024).decode()
-        while req != Server.DISCONNECT_MESSAGE:
+        print(req)
+        while req != self.DISCONNECT_MESSAGE:
             if req == "NEW_TRANS":
-                self.get_data(conn)
+                print(req)
+                #self.get_data(conn)
             elif req == "NEW_BLOCK":
-                self.get_data(conn, trans=False)
+                print(req)
+                #self.get_data(conn, trans=False)
             elif req == "GET_CHAIN_LEN":
-                self.get_chain_len(conn)
+                print(req)
+                #self.get_chain_len(conn)
             elif req == "GET_BLOCKS":
-                self.get_block(conn)
+                print(req)
+                #self.get_block(conn)
             elif req == "GET_NODES":
-                self.get_nodes(conn)
+                print(req)
+                #self.get_nodes(conn)
             else:
                 msg = "FAILED_REQUEST".encode()
                 conn.send(msg)
@@ -81,7 +87,7 @@ class Server():
     def get_data(self, conn, trans=True):
         
         # request the size of file to be received
-        size = conn.recv(1024).decode()
+        size = int(conn.recv(1024).decode())
         # get the file
         data = conn.recv(1024)
         total_recv = len(data)

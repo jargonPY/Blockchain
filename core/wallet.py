@@ -1,16 +1,24 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import json
 import os
+import sys
 from Crypto.PublicKey import RSA
-from sha import sha
+
+
+currentdir = os.path.dirname(__file__)
+parentdir = os.path.dirname(currentdir)
+sys.path.append(parentdir)
+
+from core.sha import sha
 from core.pool import TransactionPool
 from core.utxo import UTXO
 from network.client import Client
 
 class Wallet():
     
-    def __init__(self, pool, utxo, client):
+    def __init__(self):
         
         self.pool = TransactionPool()
         self.utxo = UTXO()
@@ -19,7 +27,7 @@ class Wallet():
         
     def load_key(self):
         
-        if "key.pem" in os.lsdir():
+        if "key.pem" in os.listdir():
             with open(os.getcwd() + "/key.pem") as f:
                 key = RSA.importKey(f.read())
         else:
@@ -29,8 +37,8 @@ class Wallet():
     def generate_key(self):
         
         key = RSA.generate(1024)
-        with open(os.getcwd() + "/key.pem", "w") as f:
-            f.write(RSA.exportKey("PEM"))
+        with open(os.getcwd() + "/key.pem", "wb") as f:
+            f.write(key.exportKey("PEM"))
         return key
         
     def sign(self, txid):
@@ -43,44 +51,37 @@ class Wallet():
             by this private key
         """
         
-        byte_id = bytes.fromhex(txid.hexdigest())
+        byte_id = bytes.fromhex(txid)
         sig = self.key.sign(byte_id, 32)
         return sig
     
     def balance(self):
-        
-        trans = self.utxo.get_by_pk(self.pk)
+                
+        trans = self.utxo.get_by_pk(self.key.publickey().exportKey().decode())
         balance = 0
         for t in trans:
             balance += t[4]
         return balance
         
     def pay(self, amount, recepient):
-        """ checks for sufficient funds, creates transaction """
-        
-        if amount > self.balance:
-            print("Insufficient Funds")
-        else:
-            self.new_trans(amount, recepient)
-    
-    def check_received(self):
         """ 
-        confirms transaction is sent and valid by looking in the 
-        transaction pool and utxo_database
+        amount : int
+            the amount of money to transfer
+        recepient : str
+            the public key address of receiving party
         """
         
-        pass
-    
-    def get_trans(self):
-        
-        pass
+        if amount > self.balance:
+            return "Insufficient Funds"
+        else:
+            self.new_trans(amount, recepient)
     
     def new_trans(self, amount, recepient):
         """
         amount : float
             the total payment to the recepient
-        recepient : tuple
-            the public key address of the receiving party (n, e)
+        recepient : str
+            the public key address of the receiving party
             
         returns: json
             a json data structure with input/output information of the transaction
@@ -105,7 +106,7 @@ class Wallet():
         if change > 0:
             vout.append({
                     "amount":change,
-                    "address":self.key.publickey().exportKey()
+                    "address":self.key.publickey().exportKey().decode()
                     })
         
         data = {
@@ -113,7 +114,7 @@ class Wallet():
                 "vout": vout
             }
         
-        data['txid'] = sha(data) # hashes the transaction
+        data['txid'] = sha(json.dumps(data)) # hashes the transaction
         self.broadcast(data)
         
     def _get_unspent(self, amount):
@@ -126,7 +127,7 @@ class Wallet():
         transaction amount
         """
         
-        trans = self.utxo.get_by_pk(self.pk)
+        trans = self.utxo.get_by_pk(self.key.publickey().exportKey().decode())
         cash = 0
         count = 0
         
@@ -135,25 +136,39 @@ class Wallet():
             count += 1
             
         change = cash - amount
-        return trans[:count()], change
+        return trans[:count], change
     
     def broadcast(self, trans):
         
-        ############# WORK ON THIS METHOD !!!
         self.pool.insert(trans)
         client = Client()
         client.prop_trans(trans)
         client.close()
         
+if __name__ == "__main__":
+    wallet = Wallet()
+    exit_wallet = False
     
+    while not exit_wallet:
+        command = input("To check balance type 'balance' | To make payment type 'pay' | To exit type 'exit': ")
         
+        if command == "balance":
+            print("Balance: ", wallet.balance)
+        elif command == "pay":
+            amount = input("Amount: ")
+            address = input("Address: ")
+            payment = wallet.pay(float(amount), address)
+            if payment == None:
+                print("Payment successful")
+            else:
+                print(payment)
+        elif command == "exit":
+            exit_wallet = True
+        else:
+            print("Invalid command")
+            
         
-        
-# hashed = hashlib.sha256("Hello!".encode()).digest()
-# sig = key.sign(hashed, 32)        
-# pk = key.publickey().exportKey()
-# pubKeyObj =  RSA.importKey(pk)
-# pubKeyObj.verify(hashed, sig)
+
 
         
 
