@@ -16,7 +16,7 @@ from core.blockdb import Blockdb
 
 class Verify():
     
-    def __init__(self, pool, utxo, blockdb):
+    def __init__(self, pool):
         
         self.pool = pool
         self.utxo = UTXO()

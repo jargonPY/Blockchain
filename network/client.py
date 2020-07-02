@@ -97,8 +97,8 @@ class Client():
             conn.send("NEW_TRANS".encode())
             _ = conn.recv(1024).decode()
             trans_encoded = trans.encode()
-            conn.send(trans_size.encode())
             trans_size = str(sys.getsizeof(trans_encoded))
+            conn.send(trans_size.encode())
             _ = conn.recv(1024).decode()
             conn.sendall(trans_encoded) ## RETURNS NONE IF SUCESSFUL, THROWS ERROR OTHERWISE, ADD ERROR HANDLING
         print("Transaction Sent")

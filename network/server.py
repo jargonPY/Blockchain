@@ -63,7 +63,6 @@ class Server():
         
         try:
             req = conn.recv(1024).decode()
-            print(req)
             while req != self.DISCONNECT_MESSAGE:
                 if req == "NEW_TRANS":
                     print(req)
@@ -103,7 +102,7 @@ class Server():
             total_recv += len(data)
         # deseralize the data
         data = data.decode() 
-        # convert from to JSON to Python dictionary
+        # convert from JSON to Python dictionary
         data = json.loads(data)
         if trans:
             self.new_trans(conn, data)
@@ -130,7 +129,7 @@ class Server():
     def new_trans(self, conn, trans):
         
         # check if in transaction pool
-        if self.pool.check_in_pool(self, trans['txid']):
+        if self.pool.check_in_pool(trans['txid']):
             return None
         
         if not self.verify("trans", trans):
