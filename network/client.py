@@ -120,8 +120,16 @@ class Client():
             chain_len = int(conn.recv(1024).decode())
             if chain_len > longest[1]:
                 longest = (conn, chain_len)
-        # once longest chain is found request the blocks
-        self.req_block(longest[0])
+        
+        latest = self.blockdb.get_latest()
+        # in case the server can't connect to any nodes
+        if longest[0] == None:
+            print("No nodes are currently available")
+        elif longest[1] <= latest:
+            print("Blockchain is up to date")
+        else:
+            # once longest chain is found request the blocks
+            self.req_block(longest[0])
     
     def req_block(self, conn):
         """

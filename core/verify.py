@@ -3,19 +3,24 @@
 
 import json
 import os
+import sys
 from Crypto.PublicKey import RSA
 from core.sha import sha
 
 currentdir = os.path.dirname(__file__)
 parentdir = os.path.dirname(currentdir)
+sys.path.append(parentdir)
+
+from core.utxo import UTXO
+from core.blockdb import Blockdb
 
 class Verify():
     
     def __init__(self, pool, utxo, blockdb):
         
         self.pool = pool
-        self.utxo = utxo
-        self.blockdb = blockdb
+        self.utxo = UTXO()
+        self.blockdb = Blockdb()
         self.path = parentdir + "/blocks"
         
     def get_block_num(self):

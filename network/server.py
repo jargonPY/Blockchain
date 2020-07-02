@@ -32,7 +32,8 @@ class Server():
     """
     
     PORT = 5050
-    SERVER = socket.gethostbyname(socket.gethostname())
+    #SERVER = socket.gethostbyname(socket.gethostname())
+    SERVER = "192.168.0.22"
     #SERVER = "127.0.0.1"
     ADDR =  (SERVER, PORT)
     DISCONNECT_MESSAGE = "DISCONNECT"
@@ -40,8 +41,6 @@ class Server():
     def __init__(self):
         
         self.pool = TransactionPool()
-        self.utxo = UTXO()
-        self.blockdb = Blockdb()
         self.client = Client()
         
         self.client.req_chain() # update chain since last startup
@@ -115,7 +114,7 @@ class Server():
             True if verfied, False otherwise
         """
         
-        ver = Verify(self.pool, self.utxo, self.blockdb)
+        ver = Verify(self.pool)
         if data_type == "trans":
             return ver.verify_trans(data)
         else:
@@ -137,8 +136,10 @@ class Server():
     
     def new_block(self, conn, block):
         
+        utxo = UTXO()
+        blockdb = Blockdb()
         # check if block is already in the local chain
-        exists = self.blockdb.get_block_by_hash(sha(block))
+        exists = blockdb.get_block_by_hash(sha(block))
         if exists != None:
             return None
         # ensure the block is valid
@@ -148,24 +149,29 @@ class Server():
         # remove all transaction in the block from unconfirmed pool
         self.pool.check_new_block(sha(block))
         # add all transaction outputs to utxo
-        self.utxo.add_trans(block['transactions'], sha(json.dumps(block)))
+        utxo.add_trans(block['transactions'], sha(json.dumps(block)))
         # remove all inputs from utxo
-        self.utxo.remove_trans(block['transactions'])
+        utxo.remove_trans(block['transactions'])
         # save block in Blockdb
-        self.blockdb.add_block(block)
+        blockdb.add_block(block)
         # propogate block
-        self.client.prop_blcok(json.dumps(block).encode())
+        self.client.prop_block(json.dumps(block).encode())
     
     def get_chain_len(self, conn):
 
-        latest = self.utxo.get_latest()
+        blockdb = Blockdb()
+        latest = blockdb.get_latest()
         conn.send(str(latest).encode())
 
     def get_block(self, conn):
         
+        blockdb = Blockdb()
         primary_key = int(conn.recv(1024).decode())
-        blocks = self.blockdb.get_from(primary_key)
-        conn.send(str(blocks).encode()) 
+        blocks = blockdb.get_from(primary_key)
+        conn.send(str(len(blocks)).encode()) 
+        
+        if len(blocks) == 0:
+            return None
         
         path = os.path.dirname(os.getcwd())
         for filename in blocks[3]: # WHAT IF RETURNS NONE

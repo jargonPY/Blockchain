@@ -71,4 +71,4 @@ class Blockdb():
         """
         
         self.c.execute(f"SELECT * FROM blocks WHERE ID > {primary_key}")
-        return self.c
+        return self.c.fetchall()
