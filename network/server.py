@@ -103,14 +103,32 @@ class Server():
         else:
             self.new_block(conn, data)
             
+    def verify(self, data_type, data):
+        """
+        data_type : str
+            'trans' or 'block'
+        data : dict
+            the transaction or block
+        
+        return : boolean
+            True if verfied, False otherwise
+        """
+        
+        ver = Verify(self.pool, self.utxo, self.blockdb)
+        if data_type == "trans":
+            return ver.verify_trans(data)
+        else:
+            return ver.verify_block(data)
+            
     def new_trans(self, conn, trans):
         
         # check if in transaction pool
         if self.pool.check_in_pool(self, trans['txid']):
             return None
         
-        if not Verify.verify_trans(trans):
+        if not self.verify("trans", trans):
             return None
+        print("New transaction verified")
         # add transaction to pool
         self.pool.insert(trans)
         # propogate transaction
@@ -123,8 +141,9 @@ class Server():
         if exists != None:
             return None
         # ensure the block is valid
-        if not Verify.verify_block(block):
+        if not self.verify("block", block):
             return None
+        print("New block verified")
         # remove all transaction in the block from unconfirmed pool
         self.pool.check_new_block(sha(block))
         # add all transaction outputs to utxo

@@ -140,7 +140,7 @@ class Wallet():
     
     def broadcast(self, trans):
         
-        self.pool.insert(trans)
+        self.pool.insert(trans) ###### NOT THE SAME POOL AS THE SERVER !!!
         client = Client()
         client.prop_trans(trans)
         client.close()

@@ -96,6 +96,7 @@ class Client():
             trans_size = str(sys.getsizeof(trans_encoded))
             conn.send(trans_size.encode())
             conn.sendall(trans_encoded) ## RETURNS NONE IF SUCESSFUL, THROWS ERROR OTHERWISE, ADD ERROR HANDLING
+        print("Transaction Sent")
     
     def prop_block(self, block):
         
@@ -106,7 +107,8 @@ class Client():
             block_size = str(sys.getsizeof(block_encoded))
             conn.send(block_size.encode())
             conn.sendall(block_encoded)
-        print("Done")
+        print("Block Sent")
+        
     def req_chain(self):
 
         longest = (None, 0)

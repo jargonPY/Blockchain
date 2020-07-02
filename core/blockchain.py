@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
 
-import hashlib
 import random
 import datetime
 import json
-import os
-from core.merkle import MerkleTree
 from core.sha import sha
     
 class NewBlock():
@@ -23,15 +20,29 @@ class NewBlock():
         self.prev_block_hash = prev_block_hash
         self.trans = transactions
         self.diff = diff
-        self.block = self.header()
+        self.block = self.create_block()
+    
+    def merkle_root(self, leaves):
+
+        num_leaves = len(leaves)
+        if num_leaves == 1:
+            if type(leaves[0]) == dict: # For blocks with a single transaction
+                return sha(json.dumps(leaves[0]))
+            else:
+                return leaves[0]
         
-    def header(self):
-        
-        #merkle_root = MerkleTree(self.trans).root
-        merkle_root = "1"
-        header = self.proof_of_work(merkle_root)
-        block = self.create_block(header)
-        return block
+        parent = [ ]
+        i = 0
+        while i < num_leaves:
+            left = sha(json.dumps(leaves[i]))
+            if (i + 1) < num_leaves:
+                right = sha(json.dumps(leaves[i + 1]))
+            else:
+                right = sha(json.dumps(leaves[i]))
+                
+            parent.append(sha(left + right))
+            i += 2
+        return self.merkle_root(parent)
     
     def proof_of_work(self, merkle_root):
         
@@ -47,21 +58,21 @@ class NewBlock():
             hashed = sha(json.dumps(header))
         return header
     
-    def create_block(self, header):
+    def create_block(self):
         """
-        header : dict
-            containing the proof-of-work and all header data
-            
         return : dict
             returns a dict object containing the block
         """
         
-        data = {
+        merkle_root = self.merkle_root(self.trans)
+        header = self.proof_of_work(merkle_root)
+        
+        block = {
                 "header": header,
                 "transactions": self.trans
             }
         
-        return data
+        return block
 
 
 
