@@ -91,7 +91,7 @@ class Client():
         trans : dict
             dictionary containing transaction data
         """
-
+        
         trans = json.dumps(trans)
         for conn in self.connections.values():
             conn.send("NEW_TRANS".encode())
