@@ -5,7 +5,7 @@ import os
 import sqlite3
 
 currentdir = os.path.dirname(__file__)
-parentdir = os.path.dirname(currentdir)
+parentdir = os.path.dirname(os.path.abspath(currentdir))
 
 class UTXO():
     """
@@ -50,6 +50,11 @@ class UTXO():
         """
         
         for t in trans:
+            # ensure the transaction is not already saved
+            get_trans = self.get_by_txid(t['txid'])
+            if get_trans != None:
+                return None
+            
             if len(t['vout']) == 2: # t['vout'] is a list of outputs
                 self.c.execute("INSERT INTO utxo VALUES (NULL, :txid, :address, :change, :amount, :block)",
                                                     {'txid': t['txid'],

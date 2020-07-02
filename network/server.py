@@ -32,8 +32,8 @@ class Server():
     """
     
     PORT = 5050
-   # SERVER = socket.gethostbyname(socket.gethostname())
-    SERVER = "127.0.0.1"
+    SERVER = socket.gethostbyname(socket.gethostname())
+    #SERVER = "127.0.0.1"
     ADDR =  (SERVER, PORT)
     DISCONNECT_MESSAGE = "DISCONNECT"
     
@@ -43,6 +43,8 @@ class Server():
         self.utxo = UTXO()
         self.blockdb = Blockdb()
         self.client = Client()
+        
+        self.client.req_chain() # update chain since last startup
         self.listen()
         
     def listen(self):
@@ -61,23 +63,22 @@ class Server():
     def route_request(self, conn):
         
         req = conn.recv(1024).decode()
-        print(req)
         while req != self.DISCONNECT_MESSAGE:
             if req == "NEW_TRANS":
                 print(req)
-                #self.get_data(conn)
+                self.get_data(conn)
             elif req == "NEW_BLOCK":
                 print(req)
-                #self.get_data(conn, trans=False)
+                self.get_data(conn, trans=False)
             elif req == "GET_CHAIN_LEN":
                 print(req)
-                #self.get_chain_len(conn)
+                self.get_chain_len(conn)
             elif req == "GET_BLOCKS":
                 print(req)
-                #self.get_block(conn)
+                self.get_block(conn)
             elif req == "GET_NODES":
                 print(req)
-                #self.get_nodes(conn)
+                self.get_nodes(conn)
             else:
                 msg = "FAILED_REQUEST".encode()
                 conn.send(msg)
@@ -97,7 +98,7 @@ class Server():
         # deseralize the data
         data = data.decode() 
         # convert from to JSON to Python dictionary
-        data = data.loads()
+        data = json.loads(data)
         if trans:
             self.new_trans(conn, data)
         else:
@@ -147,13 +148,13 @@ class Server():
         # remove all transaction in the block from unconfirmed pool
         self.pool.check_new_block(sha(block))
         # add all transaction outputs to utxo
-        self.utxo.add_trans(block['transactions'], sha(block))
+        self.utxo.add_trans(block['transactions'], sha(json.dumps(block)))
         # remove all inputs from utxo
         self.utxo.remove_trans(block['transactions'])
         # save block in Blockdb
         self.blockdb.add_block(block)
         # propogate block
-        self.client.prop_blcok(block)
+        self.client.prop_blcok(json.dumps(block).encode())
     
     def get_chain_len(self, conn):
 
@@ -177,7 +178,6 @@ class Server():
         
             data = json.dumps(data)
             conn.sendall(data.encode())
-            
     
     def get_nodes(self, conn):
         

@@ -25,6 +25,12 @@ class Blockdb():
 
     def add_block(self, block):
         
+        block_hash = sha(json.dumps(block['header']))
+        # check if block is already saved
+        get_block = self.get_block_by_hash(block_hash)
+        if get_block != None:
+            return None
+        
         block_num = self.get_latest()
         if block_num == None:
             block_num = 1
@@ -37,7 +43,6 @@ class Blockdb():
         with open(parentdir + "/blocks" +  file, "w") as f:
             json.dump(block, f)
         
-        block_hash = sha(json.dumps(block['header']))
         # add block to hash-table database
         with self.conn:
             self.c.execute("INSERT INTO blocks VALUES (NULL, :hash, :file)", {'hash':block_hash, 'file':f'block_{block_num}.json'})

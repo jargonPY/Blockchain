@@ -27,8 +27,8 @@ class Wallet():
         
     def load_key(self):
         
-        if "key.pem" in os.listdir():
-            with open(os.getcwd() + "/key.pem") as f:
+        if "key.pem" in os.listdir(currentdir):
+            with open(currentdir + "/key.pem") as f:
                 key = RSA.importKey(f.read())
         else:
             key = self.generate_key()
@@ -37,7 +37,7 @@ class Wallet():
     def generate_key(self):
         
         key = RSA.generate(1024)
-        with open(os.getcwd() + "/key.pem", "wb") as f:
+        with open(currentdir + "/key.pem", "wb") as f:
             f.write(key.exportKey("PEM"))
         return key
         

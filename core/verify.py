@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import hashlib
 import json
 import os
 from Crypto.PublicKey import RSA
-from core.merkle import MerkleTree
 from core.sha import sha
 
 currentdir = os.path.dirname(__file__)

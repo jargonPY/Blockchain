@@ -11,7 +11,9 @@ currentdir = os.path.dirname(__file__)
 parentdir = os.path.dirname(currentdir)
 sys.path.append(parentdir)
 
+from core.sha import sha
 from core.blockdb import Blockdb
+from core.utxo import UTXO
 
 class Client():
     
@@ -28,6 +30,7 @@ class Client():
     
     def __init__(self):
         
+        self.utxo = UTXO()
         self.blockdb = Blockdb()
         self.connections = { } # {ip : conn}
         with open(parentdir + "/network" + "/addr.json") as file:
@@ -135,17 +138,19 @@ class Client():
         conn.send(str(latest).encode())
         num_blocks = int(conn.recv(1024).decode())
 
-        block = 1
-        while block <= num_blocks:
+        block_num = 1
+        while block_num <= num_blocks:
             block_size = int(conn.recv(1024).decode())
-            data = conn.recv(1024)
+            block = conn.recv(1024)
             
-            while len(data) < block_size:
-                data += conn.recv(1024)
+            while len(block) < block_size:
+                block += conn.recv(1024)
             
-            data = json.loads(data.decode())
-     #       self.blockdb.add_block(data) ## DOESNT VARIFY THE BLOCK
-            block += 1
+            block = json.loads(block.decode())
+            self.utxo.add_trans(block['transactions'], sha(json.dumps(block)))
+            self.blockdb.add_block(block) ## DOESNT VARIFY THE BLOCK
+            block_num += 1
+        print("Blockchain Updated")
     
     def req_node(self):
         
