@@ -58,37 +58,44 @@ class Server():
             print("Server connected to: ", addr)
             thread = threading.Thread(target=self.route_request, args=(conn,))
             thread.start()
-            
+           
     def route_request(self, conn):
         
-        req = conn.recv(1024).decode()
-        while req != self.DISCONNECT_MESSAGE:
-            if req == "NEW_TRANS":
-                print(req)
-                self.get_data(conn)
-            elif req == "NEW_BLOCK":
-                print(req)
-                self.get_data(conn, trans=False)
-            elif req == "GET_CHAIN_LEN":
-                print(req)
-                self.get_chain_len(conn)
-            elif req == "GET_BLOCKS":
-                print(req)
-                self.get_block(conn)
-            elif req == "GET_NODES":
-                print(req)
-                self.get_nodes(conn)
-            else:
-                msg = "FAILED_REQUEST".encode()
-                conn.send(msg)
+        try:
             req = conn.recv(1024).decode()
+            print(req)
+            while req != self.DISCONNECT_MESSAGE:
+                if req == "NEW_TRANS":
+                    print(req)
+                    self.get_data(conn)
+                elif req == "NEW_BLOCK":
+                    print(req)
+                    self.get_data(conn, trans=False)
+                elif req == "GET_CHAIN_LEN":
+                    print(req)
+                    self.get_chain_len(conn)
+                elif req == "GET_BLOCKS":
+                    print(req)
+                    self.get_block(conn)
+                elif req == "GET_NODES":
+                    print(req)
+                    self.get_nodes(conn)
+                else:
+                    msg = "FAILED_REQUEST".encode()
+                    conn.send(msg)
+                req = conn.recv(1024).decode()
+        except Exception as e:
+            print("Exception occured with peer: ", e)
         conn.close()
+        # when this function returns the thread will be closed
             
     def get_data(self, conn, trans=True):
         
         # request the size of file to be received
+        conn.send("GET_SIZE".encode())
         size = int(conn.recv(1024).decode())
         # get the file
+        conn.send("SEND_DATA".encode())
         data = conn.recv(1024)
         total_recv = len(data)
         while total_recv < size:

@@ -95,9 +95,11 @@ class Client():
         trans = json.dumps(trans)
         for conn in self.connections.values():
             conn.send("NEW_TRANS".encode())
+            _ = conn.recv(1024).decode()
             trans_encoded = trans.encode()
-            trans_size = str(sys.getsizeof(trans_encoded))
             conn.send(trans_size.encode())
+            trans_size = str(sys.getsizeof(trans_encoded))
+            _ = conn.recv(1024).decode()
             conn.sendall(trans_encoded) ## RETURNS NONE IF SUCESSFUL, THROWS ERROR OTHERWISE, ADD ERROR HANDLING
         print("Transaction Sent")
     
