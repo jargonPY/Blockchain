@@ -9,6 +9,7 @@ A prototype of a cryptocurrency meant as a learning project to understand the in
       - This will create a private and public key for you and generate the first block which an initial transaction to your public key. Anyone joining your network will now be             able to recieve and verify your payments
     3. Run the server `python ./network/server.py`
       - This will open up a port for others on the network to connect to and communicate with your node
+      
     Connecting more computers to the network:
     1. Clone the repo on the new computer
     2. Enter the local IP address of the original computer into `./network/addr.json`
