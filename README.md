@@ -1,17 +1,21 @@
 # Blockchain
 
+A prototype of a cryptocurrency meant as a learning project to understand the inner wokrings of the many concepts involved with building a working cryptocurrency. This code can facilitate the creation, propogation, verification of transactions and blocks between nodes on a local network.
 
-
-A short intro to cryptocurrencies:
-- Digital Signatures allow for confirmation of ownership
-- An immutable public ledger ensures transparency of all transactions, this is the mechanism by which double spending is avoided
-- Proof of work facilitates consensus amongst peers in a decentralized network
-
-Given the distributed nature of the network and the random topology, different nodes will recieve transactions in different order. However to verify the validity of transactions there is a need for an agreed upon ledger that nodes can reference. Therefore at some point a node needs to propose a set of transactions that will be appended to the ledger and ensure all nodes are in agreeement of the current state of verified transactions. Since we have a distributed and anonymous network, there is a need to ensure that the porposed block was not produced by a malicious node, this is where the proof-of-work algorithm comes in, nodes compete based on CPU power, and are incentivized by transaction fees. As long as more than 50% of the network's nodes (by CPU power) are honest, the malicious nodes will not be able to outpace and cheat the system.
-  - decentralized consensus
-  - nodes compete based on CPU power (difficult to monopolize)
-      
-Data Structures:
+## Instructions:
+  ### Initialization:
+  1. Clone the repo
+  2. Open repo in the terminal and run `python ./init/genesis_block.py`
+    - This will create a private and public key for you and generate the first block which an initial transaction to your public key. Anyone joining your network will now be able       to recieve and verify your payments
+  3. Run the server `python ./network/server.py`
+    - This will open up a port for others on the network to connect to and communicate with your node
+  ### Connecting more computers to the network:
+  1. Clone the repo on the new computer
+  2. Enter the local IP address of the original computer into `./network/addr.json`
+  3. Run the server on the new computer
+  4. Now the two computers can communicate and propagate transactions
+  
+## Data structures used:
   - Block: 
           {'header': dict with header details,
            'transactions': list of transaction}
@@ -19,6 +23,7 @@ Data Structures:
           {'txid': hash of current transaction
            'vin' : list of input transaction
            'vout': output transactions (max. 2 output transactions)}
+## Databases used:
   - Blockdb:
           An SQL database containing three fields (id (primary key), hash (of the block), filename). 
       - This database is used to query blocks by their hash and find corresponding files.
@@ -30,7 +35,9 @@ Data Structures:
       
       - transactions are only added to the UTXO database once they are confirmed and are part of the blockchain
 
-On startup of server:
-  1. Empty transaction pool
-  2. Get latest block from peers
-      - request hash of chain, if doesn't match to local hash then request missing blocks
+
+
+
+
+## How mining nodes help achieve decentralized consensus:
+Given the distributed nature of the network and the random topology, different nodes will recieve transactions in different order. However to verify the validity of transactions there is a need for an agreed upon ledger that nodes can reference. Therefore at some point a node needs to propose a set of transactions that will be appended to the ledger and ensure all nodes are in agreeement of the current state of verified transactions. Since we have a distributed and anonymous network, there is a need to ensure that the porposed block was not produced by a malicious node, this is where the proof-of-work algorithm comes in, nodes compete based on CPU power, and are incentivized by transaction fees. As long as more than ~50% of the network's nodes (by CPU power) are honest, the malicious nodes will not be able to outpace and cheat the system. Hence mining nodes, which are difficult to monopolize (on a large network), are the mechanism used to achieve decentralized consensus.
