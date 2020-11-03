@@ -17,7 +17,7 @@ from core.sha import sha
 from core.pool import TransactionPool
 from core.utxo import UTXO
 from core.blockdb import Blockdb
-from client import Client
+from network.client import Client
 
 class Server():
     
@@ -26,7 +26,7 @@ class Server():
      - listen for new transactions
      - listen for new blocks
      - provide most recent blocks (after some specified block #)
-        - every block recieved is confirmed and all transactions are added to UTXO
+        - every block recieved is confirmed and all transactions are added to UTXO (database of unspent transactions)
         - if several blocks have to be recieved CHECK IN ORDER
      - provide IP addresses for node connections
     """
@@ -37,25 +37,24 @@ class Server():
     #SERVER = "127.0.0.1"
     ADDR =  (SERVER, PORT)
     DISCONNECT_MESSAGE = "DISCONNECT"
-    
+
+    logging.basicConfig(filename="server.log", format='%(asctime)s - %(message)s', level=logging.DEBUG)
+
     def __init__(self):
         
         self.pool = TransactionPool()
         self.client = Client()
-        
-        self.client.req_chain() # update chain since last startup
-        self.listen()
         
     def listen(self):
         
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # IPv4, TCP
         server.bind(self.ADDR)
         server.listen()
-        print("SERVER STARTED")
+        logging.debug("Server started")
         while True:
             conn, addr = server.accept() ## ADD ADDRESS TO NODE IPS FILE
             self.client.connect_to_ip(addr[0])
-            print("Server connected to: ", addr)
+            logging.debug(f"Server connected to: {addr[0]}")
             thread = threading.Thread(target=self.route_request, args=(conn,))
             thread.start()
            
@@ -85,7 +84,8 @@ class Server():
                 req = conn.recv(1024).decode()
         except Exception as e:
             print("Exception occured with peer: ", e)
-        conn.close()
+        finally:
+            conn.close()
         # when this function returns the thread will be closed
             
     def get_data(self, conn, trans=True):
@@ -134,7 +134,7 @@ class Server():
         
         if not self.verify("trans", trans):
             return None
-        print("New transaction verified")
+        logging.debug(f"New transaction verified {trans['txid']}")
         # add transaction to pool
         self.pool.insert(trans)
         # propogate transaction
@@ -151,7 +151,7 @@ class Server():
         # ensure the block is valid
         if not self.verify("block", block):
             return None
-        print("New block verified")
+        logging.debug("New block verified")
         # remove all transaction in the block from unconfirmed pool
         self.pool.check_new_block(sha(block))
         # add all transaction outputs to utxo
@@ -202,6 +202,9 @@ class Server():
         
 if __name__ == "__main__":
     server = Server()
+    # update blockchain since last startup
+    server.client.req_chain() 
+    server.listen()
 
     
     

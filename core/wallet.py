@@ -154,6 +154,7 @@ if __name__ == "__main__":
         
         if command == "balance":
             print("Balance: ", wallet.balance)
+
         elif command == "pay":
             amount = input("Amount: ")
             address = input("Address: ")
@@ -162,8 +163,10 @@ if __name__ == "__main__":
                 print("Payment successful")
             else:
                 print(payment)
+
         elif command == "exit":
             exit_wallet = True
+            
         else:
             print("Invalid command")
             

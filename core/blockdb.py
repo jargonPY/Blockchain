@@ -10,7 +10,7 @@ currentdir = os.path.dirname(__file__)
 parentdir = os.path.dirname(currentdir)
 
 """
-All blocks are added to Blockdb even local one, this will also automatically save the block
+All blocks are added to Blockdb, this will also automatically save the block
 in a corresponding file
 
 Blockdb is an append only database
